@@ -25,8 +25,10 @@ pub fn run_http_server(address: &str) -> Result<i8, Error>
             Ok(stream) => router::router(stream),
             Err(e) => 
             {
-                let error_message = format!("{:?}", e);
-                logger::log(&error_message, "http_server.log");
+                let error_message = &mut format!("{:?}", e);
+                // let mut error_message = error_message();
+                // let mut error_message = error_message.as_mut_str();
+                logger::log(error_message, "http_server.log");
             }
         }
     }
