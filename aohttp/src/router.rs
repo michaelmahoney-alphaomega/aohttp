@@ -2,11 +2,16 @@ extern crate serde_json;
 
 use std::{
     net::TcpStream,
-    io::{prelude::*, BufReader}};
-
+    io::{prelude::*, BufReader, BufWriter}};
 use serde_json::{Value, json};
+use crate::http::HttpRequest; //
 
-// use crate::http;
+struct Router {
+    request: HttpRequest,
+    handler: Handler
+}
+
+
 
 fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
     let buf_reader =  BufReader::new(tcp_stream_ref);
@@ -20,11 +25,14 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
     return request}
 
 pub fn router(tcp_stream: TcpStream) -> () {
-    // let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
-    //     Ok(http_request) => http_request,
-    //     Err(e) => panic!("This is broken, here's the error: {e}")};
-    // let mut buf_writer = BufWriter::new(tcp_stream);
-    // buf_writer.write(&response).unwrap();
+    let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
+        Ok(http_request) => http_request,
+        Err(e) => panic!("This is broken, here's the error: {e}")};
+
+    let response = Handle::new(http_request);
+
+    let mut buf_writer = BufWriter::new(tcp_stream);
+    buf_writer.write(&response).unwrap();
 
     // let response_body = "Hello, World!";
     // let response = format!("HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\n{response_body}");

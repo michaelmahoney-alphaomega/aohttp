@@ -1,23 +1,29 @@
-use std::time::SystemTime as st;
+use std::time::SystemTime;
 use std::fs;
+use std::io::Write;
 use std::io::Error;
 use chrono::{DateTime, Utc, SecondsFormat};
 
-pub fn log(message: &mut String, log_name: &str) -> Result<&'static str, Error>
+pub fn log<'a>(message: &'a mut String, log_path: &str) -> Result<(), Error>
 {
-    let  time_stamp = st::now();
+    // make a timestamp String - likely a better way but I'm sick of fighting with the typing system
+    let time_stamp = SystemTime::now();
     let time_stamp: DateTime<Utc> = time_stamp.into();
-    let mut time_stamp: String = time_stamp.to_rfc3339_opts(SecondsFormat::Secs, true);
-    // let time_stamp = &mut time_stamp;
-    // let  time_stamp: &String = time_stamp.to_owned();
-    time_stamp += message;
-    message = &mut time_stamp;
-    // let message = message.as_mut_str();
-    let write_log = fs::write(log_name, message);
-    
-    match write_log
+    let mut time_stamp = time_stamp.to_rfc3339_opts(SecondsFormat::Secs, true);
+
+    // prepend the timestamp to the logging message
+    time_stamp.push_str(" ");
+    let time_stamp = time_stamp.as_str();
+    message.insert_str(0, time_stamp);
+
+    let out_file = fs::OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(log_path);  
+
+    match out_file
     {
-        Ok(_) => return Ok(message),
+        Ok(mut file) => writeln!(file, "{}",message),
         Err(e) => panic!("ERROR: log function failed. Please see error: {e}")
     } 
 }

@@ -9,9 +9,10 @@ fn server_ping_test()
 #[test]
 fn log_test()
 {
-    let answer = aohttp::logger::log(&mut "this is a test", "http_server.log");
+    let message = "INFO: this is a test";
+    let answer = aohttp::logger::log(&mut String::from(message), "logs/tests.log");
     match answer {
-        Ok(_answer) => (),
-        Err(_answer) => panic!()
+        Ok(_answer) => println!("This is the ok {}", message),
+        Err(answer) => panic!("This is the error {}", answer)
     }
 }
