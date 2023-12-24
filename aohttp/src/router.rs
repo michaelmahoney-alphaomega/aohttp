@@ -8,10 +8,18 @@ use crate::http::HttpRequest; //
 
 struct Router {
     request: HttpRequest,
-    handler: Handler
 }
 
+// struct Handler 
+// {
+//     handle_func: fn,
 
+// }
+
+trait Handler
+{
+    fn new() -> () {}
+}
 
 fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
     let buf_reader =  BufReader::new(tcp_stream_ref);
@@ -29,7 +37,7 @@ pub fn router(tcp_stream: TcpStream) -> () {
         Ok(http_request) => http_request,
         Err(e) => panic!("This is broken, here's the error: {e}")};
 
-    let response = Handle::new(http_request);
+    let response = Handler::new(http_request);
 
     let mut buf_writer = BufWriter::new(tcp_stream);
     buf_writer.write(&response).unwrap();
