@@ -1,25 +1,27 @@
 extern crate serde_json; 
 
-use std::{
-    net::TcpStream,
-    io::{prelude::*, BufReader, BufWriter}};
+use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
 use serde_json::{Value, json};
-use crate::http::HttpRequest; //
+use crate::http::{HttpRequest, HttpResponse}; // local module
+
 
 struct Router {
     request: HttpRequest,
+    response: Option<HttpResponse>,
+    handler_func: fn(request: HttpRequest) -> HttpResponse, }
+
+
+impl Router {
+    fn new(&self, request:HttpRequest, handle_func: fn(request: HttpRequest) -> HttpResponse) {   
+        self.request = request;
+        self.response = None;
+        self.handler_func = handle_func;}
 }
 
-// struct Handler 
-// {
-//     handle_func: fn,
 
-// }
+pub trait Route {
+    fn handler(http_request: HttpRequest) -> HttpResponse;}
 
-trait Handler
-{
-    fn new() -> () {}
-}
 
 fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
     let buf_reader =  BufReader::new(tcp_stream_ref);

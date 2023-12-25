@@ -3,10 +3,7 @@ extern crate serde_json;
 extern crate regex;
 
 
-use std::{
-    net::TcpStream,
-    io::{prelude::*, BufReader, Error, ErrorKind},
-};
+use std::{net::TcpStream,io::{prelude::*, BufReader, Error, ErrorKind},};
 use serde_json::{Value, json};
 use regex::Regex;
 
@@ -60,59 +57,47 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     return Ok(parsed_line)}
 
 
-pub enum HttpMethod 
-{
+pub enum HttpMethod {
     Get(String),
     Delete(String),
     Patch(String),
     Post(String),
     Put(String),
-    Update(String)
-}
+    Update(String)}
 
 
-pub enum HttpProtocol 
-{
+pub enum HttpProtocol {
     Http10(String),
     Http11(String),
-    Http2(String)
-}
+    Http2(String)}
 
 
-pub enum HttpAuth 
-{
+pub enum HttpAuth {
     Basic(String),
     Modern(String),
     OAuth(String),
-    OAuth2(String)
-}
+    OAuth2(String)}
 
 
-pub enum ApiResource 
-{
-    Auth(String),
-    Dates(String),
-    Games(String),
-    Users(String),
-    Greenhouse(String)
-}
+pub enum ApiResource { 
+    Auth(String), 
+    Dates(String), 
+    Games(String), 
+    Users(String), 
+    Greenhouse(String)}
 
 
-pub struct HttpRequest 
-{
+pub struct HttpRequest {
     pub method: HttpMethod,
     pub uri: ApiResource,
     pub protocol: HttpProtocol,
     pub auth: HttpAuth,
     pub headers: Value,
-    pub body: Vec<u8>,
-}
+    pub body: Vec<u8>,}
 
 
-impl<'a> HttpRequest 
-{
-    pub fn build_from_stream<'b> (tcp_stream: &TcpStream) -> Result<HttpRequest, Error> 
-    {
+impl<'a> HttpRequest {
+    pub fn build_from_stream<'b> (tcp_stream: &TcpStream) -> Result<HttpRequest, Error> {
         // stream to BufReader - limits system calls
         let buf_reader =  BufReader::new(tcp_stream);
         let request: Vec<String> = buf_reader
@@ -121,26 +106,21 @@ impl<'a> HttpRequest
             .take_while(|line| !line.is_empty())
             .collect();
         
+        
         // pull values from the request, request link
         let request_line = &request[0];
         let mut request_headers = Vec::<&str>::new();
         let line_break = 0;
 
-        for line in &request 
-        {
-            let line = line.as_str();
-            
-            if !line.is_empty() 
-            {
-                request_headers.push(line)
-            }
-            
-            else 
-            {
+        for line in &request {
+            let line = line.as_str();   
+
+            if !line.is_empty() {
+                request_headers.push(line)}
+            else {
                 let _line_break: usize = request.iter().position(|_line| true).unwrap();
-                break;
-            }
-        }
+                break;}}
+
 
         // everything above break line convert to json=headers, all below is body      
         let request_headers = json!(request_headers);
