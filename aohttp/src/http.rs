@@ -79,12 +79,10 @@ pub enum HttpAuth {
     OAuth2(String)}
 
 
-pub enum ApiResource { 
-    Auth(String), 
-    Dates(String), 
-    Games(String), 
-    Users(String), 
-    Greenhouse(String)}
+pub struct ApiResource { 
+    endpoint: String,
+    handler: fn(HttpRequest) -> HttpResponse,
+}
 
 
 pub struct HttpRequest {

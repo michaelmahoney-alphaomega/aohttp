@@ -1,26 +1,25 @@
 extern crate serde_json; 
 
-use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
+use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter, Error}};
 use serde_json::{Value, json};
-use crate::http::{HttpRequest, HttpResponse}; // local module
+use crate::http::{HttpRequest, HttpResponse, ApiResource}; // local module
 
+pub enum Handler {
+    Route,
 
-struct Router {
-    request: HttpRequest,
-    response: Option<HttpResponse>,
-    handler_func: fn(request: HttpRequest) -> HttpResponse, }
-
-
-impl Router {
-    fn new(&self, request:HttpRequest, handle_func: fn(request: HttpRequest) -> HttpResponse) {   
-        self.request = request;
-        self.response = None;
-        self.handler_func = handle_func;}
 }
 
+struct Route {
+    request: HttpRequest,
+    response: Option<HttpResponse>,
+    handler_func: Option<fn(request: HttpRequest) -> HttpResponse>}
 
-pub trait Route {
-    fn handler(http_request: HttpRequest) -> HttpResponse;}
+
+impl Route {
+    fn new(request:HttpRequest, handle_func: fn(request: HttpRequest) -> HttpResponse) {   
+        self.request = request;
+        self.response = None;
+        self.handler_func = handle_func;}}
 
 
 fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
@@ -34,12 +33,17 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
     let request: Value = json!(request); //convert Vec to serde_json::Value
     return request}
 
+pub fn find_route(http_ref: &HttpRequest) -> Result<Route, Error> {
+    let api_resource = http_ref.uri;
+}
+
 pub fn router(tcp_stream: TcpStream) -> () {
     let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
         Ok(http_request) => http_request,
         Err(e) => panic!("This is broken, here's the error: {e}")};
+    
 
-    let response = Handler::new(http_request);
+    let response = Route {request: http_request, response: None, handler_func: auth_handler()};
 
     let mut buf_writer = BufWriter::new(tcp_stream);
     buf_writer.write(&response).unwrap();
