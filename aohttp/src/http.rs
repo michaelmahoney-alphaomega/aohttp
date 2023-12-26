@@ -14,7 +14,7 @@ use regex::Regex;
 // Data Structures
 ////////////////////////////////////////
  
- 
+#[derive(Debug)]
 pub struct HttpRequest {
     pub method: HttpMethod,
     pub uri: Uri,
@@ -23,13 +23,13 @@ pub struct HttpRequest {
     pub headers: Value,
     pub body: Vec<u8>,}
 
-
+#[derive(Debug)]
 pub struct HttpResponse {
     pub status_code: HttpStatusCode,
     pub headers: Value,
     pub body: Vec<u8>,}
 
-
+#[derive(Debug)]
 pub enum HttpMethod {
     Get(String),
     Delete(String),
@@ -38,7 +38,7 @@ pub enum HttpMethod {
     Put(String),
     Update(String)}
 
-
+#[derive(Debug)]
 pub enum HttpStatusCode {
     Ok200(u16),
     Ok201(u16),
@@ -49,7 +49,7 @@ pub enum HttpStatusCode {
     NotFound404(u16),
     ServerError505(u16),}
 
-
+#[derive(Debug)]
 pub enum HttpProtocol {
     Http10(String),
     Http11(String),
@@ -58,14 +58,14 @@ pub enum HttpProtocol {
     Http14(String),
     Http2(String)}
 
-
+#[derive(Debug)]
 pub enum HttpAuth {
     Basic(String),
     Modern(String),
     OAuth(String),
     OAuth2(String)}
 
-
+#[derive(Debug)]
 pub struct Uri { 
     // TODO
     // 1. implement the to_* and from_* methods
@@ -74,7 +74,7 @@ pub struct Uri {
     fragment: Option<String>,}
 
 
-    
+
 fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     let pattern = r"(?i)^(GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+([^\s?#]+)(?:\?([^\s#]*))?(?:#([^\s]*))?\s+HTTP/([0-9.]+)$";
 
@@ -242,5 +242,5 @@ impl<'a> HttpRequest {
 }
 
 impl HttpResponse {
-    pub fn build_from_api() -> () {}
+    pub fn as_bytes(&self) -> &[u8] {&[0;8]}
 }

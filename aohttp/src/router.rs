@@ -3,46 +3,41 @@
 
 extern crate serde_json; 
 
-use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter, Error as ioError}};
+use std::{fs::File, net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
 use serde_json::{Value, json};
 use crate::http::*; // local module
 
-pub struct Error {
-    error_code: ErrorKind, 
-}
 
+#[derive(Debug)]
+pub struct Error {
+    error_code: ErrorKind, }
+
+
+#[derive(Debug)]
 pub enum ErrorKind {
     // TODO
     // research what the standard is for propogating error in rust function calls. 
-    RouteNotFound(),
-}
+    RouteNotFound,}
 
+
+#[derive(Debug)]
 pub struct Route {
     // TODO
     // 1. Additional validation
     // 2. some encryption?
     auth: HttpAuth,
     uri: Uri,
-    handler: Option<fn(Route) -> HttpResponse>,
-}
+    handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
 
+    
 impl Route {
-    fn find_route(uri: &Uri, routes: Vec<&str>) -> Result<Route, Error> {}
+    fn find_route(uri: &Uri, routes: Vec<String>) -> Result<Route, Error> {}
     fn execute_route(&self) -> Result<HttpResponse, Error> {
-        let handler_func = self.handler.unwrap();
-        // {
-        //     Ok(func) => func.unwrap(),
-        //     Err(E) => E
-        // }
-    }
-}
+        let http_response = match self.handler {
+            Some(func) => {func(self)},
+            None => panic!("Didn't find the route, need to actually use error kinds here I think.")};
 
-
-// impl Route {
-//     fn new(request:HttpRequest, handle_func: fn(request: HttpRequest) -> HttpResponse) {   
-//         self.request = request;
-//         self.response = None;
-//         self.handler_func = handle_func;}}
+        http_response}}
 
 
 fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
@@ -66,21 +61,24 @@ pub fn router(tcp_stream: TcpStream) -> () {
         Ok(http_request) => http_request,
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
     
+    // read in routes from "routes"
+    let file = File::open("routes").expect("The routes file is missing from the root of the project.");
+    let buf = BufReader::new(file);
+    let routes: Vec<String> = buf.lines()
+        .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
+        .take_while(|line: &String| !line.is_empty())
+        .collect();
 
-    let route: Route = Route::find_route(&http_request); // implement find_route fn
-    let response: HttpResponse = Route::handler()
+    let route = match Route::find_route(&http_request.uri, routes){
+        Ok(x) => x,
+        Err(error) => panic!("{:?}", error)};
 
-    // let mut buf_writer = BufWriter::new(tcp_stream);
-    // buf_writer.write(&response).unwrap();
+    let response = match Route::execute_route(&route){
+        Ok(response) => response,
+        Err(error) => panic!("{:?}", error)};
 
-    // let response_body = "Hello, World!";
-    // let response = format!("HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\n{response_body}");
-    // let mut buf_writer = BufWriter::new(tcp_stream);
-    // buf_writer.write(&response.as_bytes()).unwrap();
-    // let response = serde_json::to_string(&response).unwrap();
-    // println!("{response}");
-
-    // let response = response.as_bytes();
-    // serde_json::to_writer(stream, &response).unwrap();
-    // buf_writer.flush().unwrap();
+    let response_bytes: &[u8] = response.as_bytes();
+    let mut buf_writer = BufWriter::new(tcp_stream);
+    buf_writer.write(response_bytes).unwrap();
+    buf_writer.flush();
 }
