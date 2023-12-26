@@ -69,7 +69,7 @@ pub enum HttpAuth {
 pub struct Uri { 
     // TODO
     // 1. implement the to_* and from_* methods
-    root: String,
+    path: String,
     query: Option<String>,
     fragment: Option<String>,}
 
@@ -84,6 +84,7 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     // Check if the request matches the regex
     let caps = re.captures(&line).expect("There was no string after the regex filter - likely poison HTTP request"); 
     let caps_len = caps.len();
+
     // Extract the request components from the capture groups 
     let processed_line = &caps[0];
     println!("{processed_line}");
@@ -94,12 +95,14 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     let query = match caps.get(3) {
         Some(query) => query.as_str(),
         _ => ""}; 
+
     // The URI query
     println!("{query}");
     let fragment = &caps[4]; // The URI fragment
     println!("{fragment}");
     let version = &caps[caps_len-1]; // The HTTP version
     println!("{version}");
+
     // Sanitize URI by removing any characters that are not alphanumeric, dash, dot, slash, or tilde
     let re_sanitize = Regex::new(r"[^a-zA-Z0-9-./~]").unwrap();
 
@@ -156,32 +159,19 @@ impl<'a> HttpRequest {
         // let request_body = re cquest_body.concat().as_bytes();
         
         let parsed_line = parse_request_line(request_line).unwrap();
-        let method = match parsed_line.get(0) {
-            Some(line) => line,
-            _ => {return Result::Err(Error::from(ErrorKind::InvalidData))} };
-
-        let path = match parsed_line.get(1) {
-            Some(line) => line,
-            _ => {return Result::Err(Error::from(ErrorKind::InvalidData))}};
-
-        let query = match parsed_line.get(2) {
-            Some(line) => line,
-            _ => {return Result::Err(Error::from(ErrorKind::InvalidData))}};
-
-        let fragment = match parsed_line.get(3) {
-            Some(line) => line,
-            _ => {return Result::Err(Error::from(ErrorKind::InvalidData))}};
-
-        let version = match parsed_line.get(4) {
-            Some(line) => line,
-            _ => {return Result::Err(Error::from(ErrorKind::InvalidData))}};
+        
+        let method = parsed_line.get(0);
+        let path = parsed_line.get(1);
+        let query = parsed_line.get(2);
+        let fragment = parsed_line.get(3);
+        let version = parsed_line.get(4);
 
         // a big old regex string to separate the top line components and sanitize any poison characters in the requested URI
         
         
         // type the request
         let request_method = match method.as_str() {
-            "GET"    => HttpMethod::Get(String::from(method)),
+            "GET"    => HttpMethod::Get(String::from(method.unwrap())),
             "Delete" => HttpMethod::Delete(String::from(method)),
             "PATCH"  => HttpMethod::Patch(String::from(method)),
             "POST"   => HttpMethod::Post(String::from(method)),
@@ -190,14 +180,11 @@ impl<'a> HttpRequest {
             &_       => HttpMethod::Get(String::from(method))};
         
         // type the requested resource based on the root element
-        let request_uri: Vec<&str> = path.split("/").collect();
-        let request_uri_root = match request_uri[0] {
-            "auth"       => ApiResource::Auth(String::from(path)),
-            "dates"      => ApiResource::Dates(String::from(path)),
-            "users"      => ApiResource::Users(String::from(path)),
-            "greenhouse" => ApiResource::Greenhouse(String::from(path)),
-            "games"      => ApiResource::Games(String::from(path)),
-            &_           => ApiResource::Auth(String::from(path))};
+        let request_uri = Uri {
+            path: path,
+            query: query,
+            fragment: fragment
+        }
 
         // type the protocol
         let request_protocol = match version.as_str() {
