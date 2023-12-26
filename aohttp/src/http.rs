@@ -1,5 +1,5 @@
 /////////////////////////////////////////
-//This module is a shell for all the enums and structs involving http operations
+// This module is a shell for all the enums and structs involving http operations
 /////////////////////////////////////////
 
 extern crate serde_json;
@@ -159,25 +159,34 @@ impl<'a> HttpRequest {
         // let request_body = re cquest_body.concat().as_bytes();
         
         let parsed_line = parse_request_line(request_line).unwrap();
-        
-        let method = parsed_line.get(0);
-        let path = parsed_line.get(1);
+        let msg = "http request not formatted correctly";
+
+        let method = match parsed_line.get(0) {
+            Some(x) => *x,
+            _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
+
+        let path = match parsed_line.get(1) {
+            Some(x) => *x,
+            _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
+
         let query = parsed_line.get(2);
         let fragment = parsed_line.get(3);
-        let version = parsed_line.get(4);
+        let version = match parsed_line.get(4) {
+            Some(x) => *x,
+            _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
 
         // a big old regex string to separate the top line components and sanitize any poison characters in the requested URI
         
         
         // type the request
         let request_method = match method.as_str() {
-            "GET"    => HttpMethod::Get(String::from(method.unwrap())),
-            "Delete" => HttpMethod::Delete(String::from(method)),
-            "PATCH"  => HttpMethod::Patch(String::from(method)),
-            "POST"   => HttpMethod::Post(String::from(method)),
-            "PUT"    => HttpMethod::Put(String::from(method)),
-            "UPDATE" => HttpMethod::Update(String::from(method)),
-            &_       => HttpMethod::Get(String::from(method))};
+            "GET"    => HttpMethod::Get(method),
+            "Delete" => HttpMethod::Delete(method),
+            "PATCH"  => HttpMethod::Patch(method),
+            "POST"   => HttpMethod::Post(method),
+            "PUT"    => HttpMethod::Put(method),
+            "UPDATE" => HttpMethod::Update(method),
+            &_       => HttpMethod::Get(method)};
         
         // type the requested resource based on the root element
         let request_uri = Uri {
@@ -188,10 +197,10 @@ impl<'a> HttpRequest {
 
         // type the protocol
         let request_protocol = match version.as_str() {
-            "HTTP/1.0"   => HttpProtocol::Http10(String::from(version)),
-            "HTTP/1.1"   => HttpProtocol::Http11(String::from(version)),
-            "HTTP/2.0"   => HttpProtocol::Http2(String::from(version)),
-            &_          => HttpProtocol::Http11(String::from(version))
+            "HTTP/1.0"   => HttpProtocol::Http10(version),
+            "HTTP/1.1"   => HttpProtocol::Http11(version),
+            "HTTP/2.0"   => HttpProtocol::Http2(version),
+            &_          => HttpProtocol::Http11(version)
         };
 
         pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> {
@@ -214,7 +223,7 @@ impl<'a> HttpRequest {
     
         let http_request = HttpRequest {
             method: request_method,
-            uri: request_uri_root,
+            uri: request_uri,
             protocol: request_protocol,
             auth: request_auth, //need to define function that returns the right type
             headers: request_headers,
