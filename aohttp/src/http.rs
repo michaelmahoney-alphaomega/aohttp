@@ -1,12 +1,80 @@
-// This module is a shell for all the enums and structs involving http operations
+/////////////////////////////////////////
+//This module is a shell for all the enums and structs involving http operations
+/////////////////////////////////////////
+
 extern crate serde_json;
 extern crate regex;
-
 
 use std::{net::TcpStream,io::{prelude::*, BufReader, Error, ErrorKind},};
 use serde_json::{Value, json};
 use regex::Regex;
 
+
+//////////////////////////////////////// 
+// Data Structures
+////////////////////////////////////////
+ 
+ 
+pub struct HttpRequest {
+    pub method: HttpMethod,
+    pub uri: Uri,
+    pub protocol: HttpProtocol,
+    pub auth: HttpAuth,
+    pub headers: Value,
+    pub body: Vec<u8>,}
+
+
+pub struct HttpResponse {
+    pub status_code: HttpStatusCode,
+    pub headers: Value,
+    pub body: Vec<u8>,}
+
+
+pub enum HttpMethod {
+    Get(String),
+    Delete(String),
+    Patch(String),
+    Post(String),
+    Put(String),
+    Update(String)}
+
+
+pub enum HttpStatusCode {
+    Ok200(u16),
+    Ok201(u16),
+    TempRedirect301(u16),
+    PermRedirect307(u16),
+    BadRequest401(u16),
+    Unauth403(u16),
+    NotFound404(u16),
+    ServerError505(u16),}
+
+
+pub enum HttpProtocol {
+    Http10(String),
+    Http11(String),
+    Http12(String),
+    Http13(String),
+    Http14(String),
+    Http2(String)}
+
+
+pub enum HttpAuth {
+    Basic(String),
+    Modern(String),
+    OAuth(String),
+    OAuth2(String)}
+
+
+pub struct Uri { 
+    // TODO
+    // 1. implement the to_* and from_* methods
+    root: String,
+    query: Option<String>,
+    fragment: Option<String>,}
+
+
+    
 fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     let pattern = r"(?i)^(GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+([^\s?#]+)(?:\?([^\s#]*))?(?:#([^\s]*))?\s+HTTP/([0-9.]+)$";
 
@@ -55,44 +123,6 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     parsed_line.push(version);
     
     return Ok(parsed_line)}
-
-
-pub enum HttpMethod {
-    Get(String),
-    Delete(String),
-    Patch(String),
-    Post(String),
-    Put(String),
-    Update(String)}
-
-
-pub enum HttpProtocol {
-    Http10(String),
-    Http11(String),
-    Http2(String)}
-
-
-pub enum HttpAuth {
-    Basic(String),
-    Modern(String),
-    OAuth(String),
-    OAuth2(String)}
-
-
-pub struct ApiResource { 
-    endpoint: String,
-    handler: fn(HttpRequest) -> HttpResponse,
-}
-
-
-pub struct HttpRequest {
-    pub method: HttpMethod,
-    pub uri: ApiResource,
-    pub protocol: HttpProtocol,
-    pub auth: HttpAuth,
-    pub headers: Value,
-    pub body: Vec<u8>,}
-
 
 impl<'a> HttpRequest {
     pub fn build_from_stream<'b> (tcp_stream: &TcpStream) -> Result<HttpRequest, Error> {
@@ -209,23 +239,6 @@ impl<'a> HttpRequest {
 
 impl<'a> HttpRequest {
     pub fn as_bytes(&self) -> &[u8] {&[0;8]}
-}
-
-pub enum HttpStatusCode {
-    Ok200,
-    Ok201,
-    TempRedirect301,
-    PermRedirect307,
-    BadRequest401,
-    Unauth403,
-    NotFound404,
-    ServerError505,
-}
-
-pub struct HttpResponse {
-    pub status_code: HttpStatusCode,
-    pub headers: Value,
-    pub body: Vec<u8>,
 }
 
 impl HttpResponse {
