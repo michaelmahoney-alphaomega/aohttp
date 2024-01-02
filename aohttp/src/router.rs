@@ -30,7 +30,7 @@ pub struct Route {
     uri: Uri,
     handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
 
-    
+
 
 
 pub fn read_in_routes() -> Vec<String> {
@@ -45,13 +45,18 @@ pub fn read_in_routes() -> Vec<String> {
 }
     
 impl Route {
-    fn find_route(uri: &Uri, routes: Vec<String>) -> Result<Route, Error> {
+    fn find_route(uri: &Uri, routes: Vec<Route>) -> Result<Route, Error> {
+        let found = false;
         for route in routes {
-            if details[1] == uri.path {
+            if uri.path == route.uri.path {
+                found = true;
+                return Ok(route)}
 
-            }
-        }
-    }
+            else {
+                continue;}
+
+        if found == false {return None;}}}
+
     fn execute_route(&self) -> Result<HttpResponse, Error> {
         let http_response = match self.handler {
             Some(func) => {func(self)},
