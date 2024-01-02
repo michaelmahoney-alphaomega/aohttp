@@ -1,5 +1,6 @@
 //TODO
-// 1. 
+// • error handling for no route
+// • read in the routes prior to the router. You don't want a file read on each request handle
 
 extern crate serde_json; 
 
@@ -30,8 +31,27 @@ pub struct Route {
     handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
 
     
+
+
+pub fn read_in_routes() -> Vec<String> {
+    let file = File::open("routes").expect("The routes file is missing from the root of the project.");
+    let buf = BufReader::new(file);
+    let routes: Vec<String> = buf.lines()
+        .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
+        .take_while(|line: &String| !line.is_empty())
+        .collect();
+
+    return routes
+}
+    
 impl Route {
-    fn find_route(uri: &Uri, routes: Vec<String>) -> Result<Route, Error> {}
+    fn find_route(uri: &Uri, routes: Vec<String>) -> Result<Route, Error> {
+        for route in routes {
+            if details[1] == uri.path {
+
+            }
+        }
+    }
     fn execute_route(&self) -> Result<HttpResponse, Error> {
         let http_response = match self.handler {
             Some(func) => {func(self)},
@@ -56,7 +76,7 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
 
 // this is the main workhorse function of this crate\
 // it's currently skeletoned out for development
-pub fn router(tcp_stream: TcpStream) -> () {
+pub fn router(tcp_stream: TcpStream) {
     let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
         Ok(http_request) => http_request,
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
