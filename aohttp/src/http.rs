@@ -5,7 +5,7 @@
 extern crate serde_json;
 extern crate regex;
 
-use std::{net::TcpStream,io::{prelude::*, BufReader, Error, ErrorKind},};
+use std::{net::TcpStream,io::{prelude::*, BufReader, Error},};
 use serde_json::{Value, json};
 use regex::Regex;
 
@@ -69,9 +69,9 @@ pub enum HttpAuth {
 pub struct Uri { 
     // TODO
     // 1. implement the to_* and from_* methods
-    path: String,
-    query: Option<String>,
-    fragment: Option<String>,}
+    pub path: String,
+    pub query: Option<String>,
+    pub fragment: Option<String>,}
 
 
 
@@ -193,7 +193,7 @@ impl<'a> HttpRequest {
             path: path,
             query: query,
             fragment: fragment
-        }
+        };
 
         // type the protocol
         let request_protocol = match version.as_str() {

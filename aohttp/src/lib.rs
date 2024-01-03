@@ -7,6 +7,7 @@ pub mod logger;
 
 use std::net::TcpListener;
 use std::io::Error;
+use crate::router::Route;
 
 pub fn create_http_server(address: &str) -> Result<TcpListener, Error> 
 {
@@ -14,7 +15,7 @@ pub fn create_http_server(address: &str) -> Result<TcpListener, Error>
     return Ok(http_server)
 }
 
-pub fn run_http_server(address: &str) -> Result<i8, Error>
+pub fn run_http_server(address: &str, routes: Vec<Route>) -> Result<i8, Error>
 {
     let server = create_http_server(address)?;
 
@@ -22,7 +23,7 @@ pub fn run_http_server(address: &str) -> Result<i8, Error>
     {
         match stream
         {
-            Ok(stream) => router::router(stream),
+            Ok(stream) => router::router(stream, routes),
             Err(e) => 
             {
                 let error = &mut format!("{:?}", e);

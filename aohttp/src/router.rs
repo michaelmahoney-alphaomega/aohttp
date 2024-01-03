@@ -4,7 +4,7 @@
 
 extern crate serde_json; 
 
-use std::{fs::File, net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
+use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
 use serde_json::{Value, json};
 use crate::http::*; // local module
 
@@ -26,36 +26,40 @@ pub struct Route {
     // TODO
     // 1. Additional validation
     // 2. some encryption?
-    auth: HttpAuth,
-    uri: Uri,
-    handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
+    pub auth: HttpAuth,
+    pub uri: Uri,
+    pub handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
 
 
+//I don't think this functionality is needed at all. Users can import the route struct and just make their things right there.
 
+// pub fn read_in_routes() -> Vec<String> {
+//     let file = File::open("routes").expect("The routes file is missing from the root of the project.");
+//     let buf = BufReader::new(file);
+//     let routes: Vec<String> = buf.lines()
+//         .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
+//         .take_while(|line: &String| !line.is_empty())
+//         .collect();
 
-pub fn read_in_routes() -> Vec<String> {
-    let file = File::open("routes").expect("The routes file is missing from the root of the project.");
-    let buf = BufReader::new(file);
-    let routes: Vec<String> = buf.lines()
-        .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
-        .take_while(|line: &String| !line.is_empty())
-        .collect();
-
-    return routes
-}
+//     return routes
+// }
     
 impl Route {
     fn find_route(uri: &Uri, routes: Vec<Route>) -> Result<Route, Error> {
-        let found = false;
-        for route in routes {
-            if uri.path == route.uri.path {
-                found = true;
-                return Ok(route)}
+        let mut found = false;
+        let mut answer: Result<Route, Error> = Err(Error{error_code: ErrorKind::RouteNotFound});
+        if routes.is_empty() {
+            return answer}
+        
+        else {
+            for route in routes {
+                if uri.path == route.uri.path {
+                    answer = Ok(route);
+                    break}
+                else {
+                    continue;}}
 
-            else {
-                continue;}
-
-        if found == false {return None;}}}
+            return answer}}
 
     fn execute_route(&self) -> Result<HttpResponse, Error> {
         let http_response = match self.handler {
@@ -81,18 +85,18 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
 
 // this is the main workhorse function of this crate\
 // it's currently skeletoned out for development
-pub fn router(tcp_stream: TcpStream) {
+pub fn router(tcp_stream: TcpStream, routes: Vec<Route>) {
     let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
         Ok(http_request) => http_request,
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
     
     // read in routes from "routes"
-    let file = File::open("routes").expect("The routes file is missing from the root of the project.");
-    let buf = BufReader::new(file);
-    let routes: Vec<String> = buf.lines()
-        .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
-        .take_while(|line: &String| !line.is_empty())
-        .collect();
+    // let file = File::open("routes").expect("The routes file is missing from the root of the project.");
+    // let buf = BufReader::new(file);
+    // let routes: Vec<String> = buf.lines()
+    //     .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
+    //     .take_while(|line: &String| !line.is_empty())
+    //     .collect();
 
     let route = match Route::find_route(&http_request.uri, routes){
         Ok(x) => x,
