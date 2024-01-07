@@ -15,7 +15,7 @@ pub fn create_http_server(address: &str) -> Result<TcpListener, Error>
     return Ok(http_server)
 }
 
-pub fn run_http_server(address: &str, routes: Vec<Route>) -> Result<i8, Error>
+pub fn run_http_server(address: &str, routes: &Vec<&Route>) -> Result<i8, Error>
 {
     let server = create_http_server(address)?;
 

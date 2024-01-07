@@ -88,10 +88,13 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     // Extract the request components from the capture groups 
     let processed_line = &caps[0];
     println!("{processed_line}");
+
     let method = caps.get(1).unwrap().as_str(); // The HTTP method
     println!("{method}");
+
     let path = caps.get(2).unwrap().as_str(); // The URI path
     println!("{path}");
+    
     let query = match caps.get(3) {
         Some(query) => query.as_str(),
         _ => ""}; 
@@ -159,20 +162,25 @@ impl<'a> HttpRequest {
         // let request_body = re cquest_body.concat().as_bytes();
         
         let parsed_line = parse_request_line(request_line).unwrap();
-        let msg = "http request not formatted correctly";
 
         let method = match parsed_line.get(0) {
-            Some(x) => *x,
+            Some(x) => x.to_owned(),
             _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
 
         let path = match parsed_line.get(1) {
-            Some(x) => *x,
+            Some(x) => x.to_owned(),
             _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
 
-        let query = parsed_line.get(2);
-        let fragment = parsed_line.get(3);
+        let query = match parsed_line.get(2) {
+            Some(x) => Some(x.to_owned()),
+            _ => None};
+
+        let fragment = match parsed_line.get(3) {
+            Some(x) => Some(x.to_owned()),
+            _ => None};
+
         let version = match parsed_line.get(4) {
-            Some(x) => *x,
+            Some(x) => x.to_owned(),
             _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
 
         // a big old regex string to separate the top line components and sanitize any poison characters in the requested URI

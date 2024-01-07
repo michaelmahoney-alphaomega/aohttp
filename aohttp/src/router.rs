@@ -45,9 +45,8 @@ pub struct Route {
 // }
     
 impl Route {
-    fn find_route(uri: &Uri, routes: Vec<Route>) -> Result<Route, Error> {
-        let mut found = false;
-        let mut answer: Result<Route, Error> = Err(Error{error_code: ErrorKind::RouteNotFound});
+    fn find_route<'a>(uri: &Uri, routes: &Vec<&'a Route>) -> Result<&'a Route, Error> {
+        let mut answer: Result<&Route, Error> = Err(Error{error_code: ErrorKind::RouteNotFound});
         if routes.is_empty() {
             return answer}
         
@@ -85,7 +84,7 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
 
 // this is the main workhorse function of this crate\
 // it's currently skeletoned out for development
-pub fn router(tcp_stream: TcpStream, routes: Vec<Route>) {
+pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
     let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
         Ok(http_request) => http_request,
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
