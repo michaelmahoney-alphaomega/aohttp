@@ -63,7 +63,9 @@ pub enum HttpAuth {
     Basic(String),
     Modern(String),
     OAuth(String),
-    OAuth2(String)}
+    OAuth2(String),
+    BadAuth(String),
+    NoAuth}
 
 #[derive(Debug)]
 pub struct Uri { 
@@ -98,12 +100,22 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     let query = match caps.get(3) {
         Some(query) => query.as_str(),
         _ => ""}; 
-
-    // The URI query
     println!("{query}");
-    let fragment = &caps[4]; // The URI fragment
+
+
+    let fragment = match caps.get(4) 
+    {
+        Some(query) => query.as_str(),
+        _ => ""
+    }; 
+
     println!("{fragment}");
-    let version = &caps[caps_len-1]; // The HTTP version
+
+    let version = match caps.get(usize::MAX)
+    {
+        Some(version) => version.as_str(),
+        _ => ""
+    };
     println!("{version}");
 
     // Sanitize URI by removing any characters that are not alphanumeric, dash, dot, slash, or tilde
@@ -126,6 +138,7 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     parsed_line.push(method); 
     parsed_line.push(path);
     parsed_line.push(query);
+    parsed_line.push(fragment);
     parsed_line.push(version);
     
     return Ok(parsed_line)}
@@ -158,11 +171,16 @@ impl<'a> HttpRequest {
 
         // everything above break line convert to json=headers, all below is body      
         let request_headers = json!(request_headers);
+        println!("{:?}", request_headers);
         let request_body= request[line_break + 1..].concat().into_bytes();
         // let request_body = re cquest_body.concat().as_bytes();
         
         let parsed_line = parse_request_line(request_line).unwrap();
+        for vec in &parsed_line
+        {
+            println!("{:?}", vec);
 
+        }
         let method = match parsed_line.get(0) {
             Some(x) => x.to_owned(),
             _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
@@ -213,10 +231,11 @@ impl<'a> HttpRequest {
 
         pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> {
             let custom_error = Error::new(std::io::ErrorKind::InvalidData, "Failed");
-            let request_auth = request_headers
-            .get("Authorization")
-            .unwrap()
-            .to_string();
+            let request_auth = match request_headers.get("Authorization")
+            {
+                Some(auth) => auth.to_string(),
+                _ => String::from("")
+            };
             
             if request_auth.contains("Basic") {
                 return Ok(HttpAuth::Basic(request_auth))} //just do a lifetime for this
@@ -225,7 +244,7 @@ impl<'a> HttpRequest {
                 return Ok(HttpAuth::Modern(request_auth))}//just do a lifetime for this
             
             else {
-                return Err(custom_error)}}
+                return Ok(HttpAuth::NoAuth)}}
 
         let request_auth = get_auth_type(&request_headers).unwrap();      
     
