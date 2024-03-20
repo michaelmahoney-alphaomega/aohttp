@@ -230,11 +230,9 @@ impl<'a> HttpRequest {
 
         pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> {
             let custom_error = Error::new(std::io::ErrorKind::InvalidData, "Failed");
-            let request_auth = match request_headers.get("Authorization")
-            {
+            let request_auth = match request_headers.get("Authorization"){
                 Some(auth) => auth.to_string(),
-                _ => String::from("")
-            };
+                _ => String::from("")};
             
             if request_auth.contains("Basic") {
                 return Ok(HttpAuth::Basic(request_auth))} //just do a lifetime for this
