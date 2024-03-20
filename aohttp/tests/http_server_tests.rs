@@ -8,11 +8,9 @@ fn test_constant_setup() -> Route
 {
     let auth: HttpAuth = HttpAuth::Basic(String::from("this is a thing"));
     let uri: Uri = Uri {
-        path: String::from("test_path"), 
+        path: String::from("/test_path"), 
         query: None, 
-        fragment: None 
-    };
-
+        fragment: None };
     let handler: Option<fn(&Route) -> Result<HttpResponse, Error>> = None;
 
     let test_route: Route = Route {

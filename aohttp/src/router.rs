@@ -48,11 +48,13 @@ impl Route {
     fn find_route<'a>(uri: &Uri, routes: &Vec<&'a Route>) -> Result<&'a Route, Error> {
         let mut answer: Result<&Route, Error> = Err(Error{error_code: ErrorKind::RouteNotFound});
         if routes.is_empty() {
+            println!("There are no routes in the router.");
             return answer}
         
         else {
             for route in routes {
                 if uri.path == route.uri.path {
+                    println!("Found the route: {:?}", route.uri.path);
                     answer = Ok(route);
                     break}
                 else {
@@ -63,7 +65,7 @@ impl Route {
     fn execute_route(&self) -> Result<HttpResponse, Error> {
         let http_response = match self.handler {
             Some(func) => {func(self)},
-            None => panic!("Didn't find the route, need to actually use error kinds here I think.")};
+            None => panic!("ERROR: The route has no handler. Killing the stream.")};
 
         http_response}}
 
@@ -108,5 +110,5 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
     let response_bytes: &[u8] = response.as_bytes();
     let mut buf_writer = BufWriter::new(tcp_stream);
     buf_writer.write(response_bytes).unwrap();
-    buf_writer.flush();
+    buf_writer.flush().unwrap();
 }

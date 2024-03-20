@@ -78,8 +78,7 @@ pub struct Uri {
 
 
 fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
-    let pattern = r"(?i)^(GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+([^\s?#]+)(?:\?([^\s#]*))?(?:#([^\s]*))?\s+HTTP/([0-9.]+)$";
-
+    let pattern = r"(?i)^(GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+([^\s?#]+)(?:\?([^\s#_]*))?(?:#([^\s_]*))?\s+HTTP/([0-9.]+)$";
     // Create a regex object from the pattern
     let re = Regex::new(pattern).unwrap();
 
@@ -89,50 +88,50 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
 
     // Extract the request components from the capture groups 
     let processed_line = &caps[0];
-    println!("{processed_line}");
+    println!("processed line: {processed_line}");
 
-    let method = caps.get(1).unwrap().as_str(); // The HTTP method
-    println!("{method}");
+    let method = caps.get(1).unwrap().as_str().to_string(); // The HTTP method
+    println!("method: {method}");
 
-    let path = caps.get(2).unwrap().as_str(); // The URI path
-    println!("{path}");
+    let path = caps.get(2).unwrap().as_str().to_string(); // The URI path
+    println!("path: {path}");
     
     let query = match caps.get(3) {
-        Some(query) => query.as_str(),
-        _ => ""}; 
-    println!("{query}");
+        Some(query) => query.as_str().to_string(),
+        _ => "".to_string()}; 
+    println!("query: {query}");
 
 
     let fragment = match caps.get(4) 
     {
-        Some(query) => query.as_str(),
-        _ => ""
+        Some(query) => query.as_str().to_string(),
+        _ => "".to_string()
     }; 
 
-    println!("{fragment}");
+    println!("fragment: {fragment}");
 
     let version = match caps.get(usize::MAX)
     {
-        Some(version) => version.as_str(),
-        _ => ""
+        Some(version) => version.as_str().to_string(),
+        _ => "".to_string()
     };
-    println!("{version}");
+    println!("version: {version}");
 
     // Sanitize URI by removing any characters that are not alphanumeric, dash, dot, slash, or tilde
-    let re_sanitize = Regex::new(r"[^a-zA-Z0-9-./~]").unwrap();
+    // let re_sanitize = Regex::new(r"[^a-zA-Z0-9-./~]").unwrap();
 
-    let method = String::from(method);
+    // let method = String::from(method);
 
-    let path = String::from(
-        re_sanitize.replace_all(path, "").as_ref());
+    // let path = String::from(
+    //     re_sanitize.replace_all(path, "").as_ref());
 
-    let query = String::from(
-        re_sanitize.replace_all(query, "").as_ref());
+    // let query = String::from(
+    //     re_sanitize.replace_all(query, "").as_ref());
 
-    let fragment = String::from(
-        re_sanitize.replace_all(fragment, "").as_ref());
+    // let fragment = String::from(
+    //     re_sanitize.replace_all(fragment, "").as_ref());
 
-    let version = String::from(version);
+    // let version = String::from(version);
 
     let mut parsed_line = Vec::new();
     parsed_line.push(method); 
@@ -171,14 +170,14 @@ impl<'a> HttpRequest {
 
         // everything above break line convert to json=headers, all below is body      
         let request_headers = json!(request_headers);
-        println!("{:?}", request_headers);
+        // println!("{:?}", request_headers);
         let request_body= request[line_break + 1..].concat().into_bytes();
         // let request_body = re cquest_body.concat().as_bytes();
         
         let parsed_line = parse_request_line(request_line).unwrap();
         for vec in &parsed_line
         {
-            println!("{:?}", vec);
+            println!("vec: {:?}", vec);
 
         }
         let method = match parsed_line.get(0) {
