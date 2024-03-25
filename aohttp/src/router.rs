@@ -53,16 +53,16 @@ impl Route {
         http_response}}
 
 
-fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
-    let buf_reader =  BufReader::new(tcp_stream_ref);
-    let request: Vec<String> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line: &String| !line.is_empty())
-        .collect();
+// fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
+//     let buf_reader =  BufReader::new(tcp_stream_ref);
+//     let request: Vec<String> = buf_reader
+//         .lines()
+//         .map(|result| result.unwrap())
+//         .take_while(|line: &String| !line.is_empty())
+//         .collect();
 
-    let request: Value = json!(request); //convert Vec to serde_json::Value
-    return request}
+//     let request: Value = json!(request); //convert Vec to serde_json::Value
+//     return request}
 
 
 
@@ -71,7 +71,7 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
 // it's currently skeletoned out for development
 pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
     let root_route :Route = Route { // NEED TO PUT THIS DETAILS IN A CONFIG FILE
-        auth: HttpAuth::Basic(String::from("No Auth Provided")),
+        auth: HttpAuth::NoAuth,
         uri: Uri {
             path: String::from("/"),
             query: None,
