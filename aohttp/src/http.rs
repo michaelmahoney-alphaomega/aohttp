@@ -134,11 +134,11 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     // let version = String::from(version);
 
     let mut parsed_line = Vec::new();
-    parsed_line.push(method); 
-    parsed_line.push(path);
-    parsed_line.push(query);
-    parsed_line.push(fragment);
-    parsed_line.push(version);
+        parsed_line.push(method); 
+        parsed_line.push(path);
+        parsed_line.push(query);
+        parsed_line.push(fragment);
+        parsed_line.push(version);
     
     return Ok(parsed_line)}
 
@@ -175,11 +175,9 @@ impl<'a> HttpRequest {
         // let request_body = re cquest_body.concat().as_bytes();
         
         let parsed_line = parse_request_line(request_line).unwrap();
-        for vec in &parsed_line
-        {
-            println!("vec: {:?}", vec);
-
-        }
+        for vec in &parsed_line{
+            println!("vec: {:?}", vec);}
+            
         let method = match parsed_line.get(0) {
             Some(x) => x.to_owned(),
             _ => panic!("ERROR: The request was a valid http request. Killing the stream")};
