@@ -8,18 +8,15 @@ use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
 use serde_json::{Value, json};
 use crate::http::*; // local module
 
-
 #[derive(Debug)]
 pub struct Error {
     error_code: ErrorKind, }
-
 
 #[derive(Debug)]
 pub enum ErrorKind {
     // TODO
     // research what the standard is for propogating error in rust function calls. 
     RouteNotFound,}
-
 
 #[derive(Debug)]
 pub struct Route {
@@ -29,20 +26,6 @@ pub struct Route {
     pub auth: HttpAuth,
     pub uri: Uri,
     pub handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
-
-
-//I don't think this functionality is needed at all. Users can import the route struct and just make their things right there.
-
-// pub fn read_in_routes() -> Vec<String> {
-//     let file = File::open("routes").expect("The routes file is missing from the root of the project.");
-//     let buf = BufReader::new(file);
-//     let routes: Vec<String> = buf.lines()
-//         .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
-//         .take_while(|line: &String| !line.is_empty())
-//         .collect();
-
-//     return routes
-// }
     
 impl Route {
     fn find_route<'a>(uri: &Uri, routes: &Vec<&'a Route>) -> Result<&'a Route, Error> {
@@ -57,8 +40,8 @@ impl Route {
                     println!("Found the route: {:?}", route.uri.path);
                     answer = Ok(route);
                     break}
-                else {
-                    continue;}}
+
+                else {continue;}}
 
             return answer}}
 
@@ -87,27 +70,39 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
 // this is the main workhorse function of this crate\
 // it's currently skeletoned out for development
 pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
+    let root_route :Route = Route {
+        auth: HttpAuth::Basic(String::from("No Auth Provided")),
+        uri: Uri {
+            path: String::from("/"),
+            query: None,
+            fragment: None},
+
+        handler: Some(|route| -> Result<HttpResponse, Error> {
+            let response = HttpResponse {
+                status_code: HttpStatusCode::Ok200(200),
+                headers: json!({"Content-Type": "text/html"}),
+                body: Some("hello world!".as_bytes().to_vec())};
+
+            return Ok(response)})};
+
     let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
         Ok(http_request) => http_request,
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
     
-    // read in routes from "routes"
-    // let file = File::open("routes").expect("The routes file is missing from the root of the project.");
-    // let buf = BufReader::new(file);
-    // let routes: Vec<String> = buf.lines()
-    //     .map(|x| x.expect("Failed to parse line in routes. Keep the characters UTF-8"))
-    //     .take_while(|line: &String| !line.is_empty())
-    //     .collect();
+    let route = Route::find_route(&http_request.uri, routes)
+        .unwrap_or_else(|error| { 
+            println!("{:?}", error); 
+            return &root_route;});
 
-    let route = match Route::find_route(&http_request.uri, routes){
-        Ok(x) => x,
-        Err(error) => panic!("{:?}", error)};
+    // let route = match Route::find_route(&http_request.uri, routes){
+    //     Ok(x) => x,
+    //     Err(error) => };
 
-    let response = match Route::execute_route(&route){
+    let response = match Route::execute_route(&route) {
         Ok(response) => response,
         Err(error) => panic!("{:?}", error)};
 
-    let response_bytes: &[u8] = response.as_bytes();
+    let response_bytes: &[u8] = &response.as_bytes();
     let mut buf_writer = BufWriter::new(tcp_stream);
     buf_writer.write(response_bytes).unwrap();
     buf_writer.flush().unwrap();

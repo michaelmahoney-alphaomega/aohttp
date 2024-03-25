@@ -27,7 +27,7 @@ pub struct HttpRequest {
 pub struct HttpResponse {
     pub status_code: HttpStatusCode,
     pub headers: Value,
-    pub body: Vec<u8>,}
+    pub body: Option<Vec<u8>>,}
 
 #[derive(Debug)]
 pub enum HttpMethod {
@@ -260,5 +260,36 @@ impl<'a> HttpRequest {
 }
 
 impl HttpResponse {
-    pub fn as_bytes(&self) -> &[u8] {&[0;8]}
+    pub fn as_bytes(&self) -> Vec<u8> {
+        let mut response = Vec::new();
+        let status_code = match self.status_code {
+            HttpStatusCode::Ok200(_) => "HTTP/1.1 200 OK",
+            HttpStatusCode::Ok201(_) => "HTTP/1.1 201 Created",
+            HttpStatusCode::TempRedirect301(_) => "HTTP/1.1 301 Moved Permanently",
+            HttpStatusCode::PermRedirect307(_) => "HTTP/1.1 307 Temporary Redirect",
+            HttpStatusCode::BadRequest401(_) => "HTTP/1.1 401 Bad Request",
+            HttpStatusCode::Unauth403(_) => "HTTP/1.1 403 Unauthorized",
+            HttpStatusCode::NotFound404(_) => "HTTP/1.1 404 Not Found",
+            HttpStatusCode::ServerError505(_) => "HTTP/1.1 505 Internal Server Error",
+        };
+        let headers = match self.headers.as_str(){
+            Some(headers) => headers,
+            None => "Content-Type: text/html"
+        
+        };
+        let body = match self.body.clone() {
+            Some(body) => body,
+            None => "".into() 
+        };
+        let body: &[u8]  = &body;
+        let new_line = b"\n".as_slice();
+        response.push(status_code.as_bytes());
+        response.push(new_line);
+        response.push(headers.as_bytes());
+        response.push(new_line);
+        response.push(new_line);
+        response.push(body);
+
+        response.concat()
+    }
 }
