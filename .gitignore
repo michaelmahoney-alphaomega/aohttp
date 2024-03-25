@@ -1,3 +1,4 @@
 aohttp/target
 *.csv
 *.log
+.vscode
