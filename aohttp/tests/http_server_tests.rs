@@ -27,7 +27,7 @@ fn test_constant_setup() -> Route {
 
 
 #[test]
-fn server_ping_test(){
+fn server_standup_test(){
     let test_route = test_constant_setup();
     let routes: Vec<&Route> = vec![&test_route];
     let result = aohttp::run_http_server("127.0.0.1:8080", &routes);

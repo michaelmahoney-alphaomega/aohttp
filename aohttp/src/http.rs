@@ -31,32 +31,32 @@ pub struct HttpResponse {
 
 #[derive(Debug)]
 pub enum HttpMethod {
-    Get(String),
-    Delete(String),
-    Patch(String),
-    Post(String),
-    Put(String),
-    Update(String)}
+    Get,
+    Delete,
+    Patch,
+    Post,
+    Put,
+    Update}
 
 #[derive(Debug)]
 pub enum HttpStatusCode {
-    Ok200(u16),
-    Ok201(u16),
-    TempRedirect301(u16),
-    PermRedirect307(u16),
-    BadRequest401(u16),
-    Unauth403(u16),
-    NotFound404(u16),
-    ServerError505(u16),}
+    Ok200,
+    Ok201,
+    TempRedirect301,
+    PermRedirect307,
+    BadRequest401,
+    Unauth403,
+    NotFound404,
+    ServerError505,}
 
 #[derive(Debug)]
 pub enum HttpProtocol {
-    Http10(String),
-    Http11(String),
-    Http12(String),
-    Http13(String),
-    Http14(String),
-    Http2(String)}
+    Http10,
+    Http11,
+    Http12,
+    Http13,
+    Http14,
+    Http2}
 
 #[derive(Debug)]
 pub enum HttpAuth {
@@ -203,13 +203,13 @@ impl<'a> HttpRequest {
         
         // type the request
         let request_method = match method.as_str() {
-            "GET"    => HttpMethod::Get(method),
-            "Delete" => HttpMethod::Delete(method),
-            "PATCH"  => HttpMethod::Patch(method),
-            "POST"   => HttpMethod::Post(method),
-            "PUT"    => HttpMethod::Put(method),
-            "UPDATE" => HttpMethod::Update(method),
-            &_       => HttpMethod::Get(method)};
+            "GET"    => HttpMethod::Get,
+            "Delete" => HttpMethod::Delete,
+            "PATCH"  => HttpMethod::Patch,
+            "POST"   => HttpMethod::Post,
+            "PUT"    => HttpMethod::Put,
+            "UPDATE" => HttpMethod::Update,
+            &_       => HttpMethod::Get};
         
         // type the requested resource based on the root element
         let request_uri = Uri {
@@ -220,10 +220,10 @@ impl<'a> HttpRequest {
 
         // type the protocol
         let request_protocol = match version.as_str() {
-            "HTTP/1.0"   => HttpProtocol::Http10(version),
-            "HTTP/1.1"   => HttpProtocol::Http11(version),
-            "HTTP/2.0"   => HttpProtocol::Http2(version),
-            &_          => HttpProtocol::Http11(version)
+            "HTTP/1.0"   => HttpProtocol::Http10,
+            "HTTP/1.1"   => HttpProtocol::Http11,
+            "HTTP/2.0"   => HttpProtocol::Http2,
+            &_          => HttpProtocol::Http11,
         };
 
         pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> {
@@ -260,24 +260,24 @@ impl<'a> HttpRequest {
 }
 
 impl HttpResponse {
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(self) -> Vec<u8> {
         let mut response = Vec::new();
         let status_code = match self.status_code {
-            HttpStatusCode::Ok200(_) => "HTTP/1.1 200 OK",
-            HttpStatusCode::Ok201(_) => "HTTP/1.1 201 Created",
-            HttpStatusCode::TempRedirect301(_) => "HTTP/1.1 301 Moved Permanently",
-            HttpStatusCode::PermRedirect307(_) => "HTTP/1.1 307 Temporary Redirect",
-            HttpStatusCode::BadRequest401(_) => "HTTP/1.1 401 Bad Request",
-            HttpStatusCode::Unauth403(_) => "HTTP/1.1 403 Unauthorized",
-            HttpStatusCode::NotFound404(_) => "HTTP/1.1 404 Not Found",
-            HttpStatusCode::ServerError505(_) => "HTTP/1.1 505 Internal Server Error",
+            HttpStatusCode::Ok200 => "HTTP/1.1 200 OK",
+            HttpStatusCode::Ok201 => "HTTP/1.1 201 Created",
+            HttpStatusCode::TempRedirect301 => "HTTP/1.1 301 Moved Permanently",
+            HttpStatusCode::PermRedirect307 => "HTTP/1.1 307 Temporary Redirect",
+            HttpStatusCode::BadRequest401 => "HTTP/1.1 401 Bad Request",
+            HttpStatusCode::Unauth403 => "HTTP/1.1 403 Unauthorized",
+            HttpStatusCode::NotFound404 => "HTTP/1.1 404 Not Found",
+            HttpStatusCode::ServerError505 => "HTTP/1.1 505 Internal Server Error",
         };
         let headers = match self.headers.as_str(){
             Some(headers) => headers,
             None => "Content-Type: text/html"
         
         };
-        let body = match self.body.clone() {
+        let body = match self.body {
             Some(body) => body,
             None => "".into() 
         };

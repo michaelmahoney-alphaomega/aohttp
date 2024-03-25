@@ -6,7 +6,7 @@ extern crate serde_json;
 
 use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
 use serde_json::{Value, json};
-use crate::http::*; // local module
+use crate::{http::*, logger}; // local module
 
 #[derive(Debug)]
 pub struct Error {
@@ -70,7 +70,7 @@ fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
 // this is the main workhorse function of this crate\
 // it's currently skeletoned out for development
 pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
-    let root_route :Route = Route {
+    let root_route :Route = Route { // NEED TO PUT THIS DETAILS IN A CONFIG FILE
         auth: HttpAuth::Basic(String::from("No Auth Provided")),
         uri: Uri {
             path: String::from("/"),
@@ -79,11 +79,12 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
 
         handler: Some(|route| -> Result<HttpResponse, Error> {
             let response = HttpResponse {
-                status_code: HttpStatusCode::Ok200(200),
+                status_code: HttpStatusCode::NotFound404,
                 headers: json!({"Content-Type": "text/html"}),
                 body: Some("hello world!".as_bytes().to_vec())};
 
-            return Ok(response)})};
+            return Ok(response)})
+    };
 
     let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
         Ok(http_request) => http_request,
@@ -91,12 +92,9 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
     
     let route = Route::find_route(&http_request.uri, routes)
         .unwrap_or_else(|error| { 
-            println!("{:?}", error); 
+            let mut message = format!("ERROR: {:?}", error.error_code);
+            logger::log(&mut message, "logs/tests.log").unwrap(); 
             return &root_route;});
-
-    // let route = match Route::find_route(&http_request.uri, routes){
-    //     Ok(x) => x,
-    //     Err(error) => };
 
     let response = match Route::execute_route(&route) {
         Ok(response) => response,
@@ -104,6 +102,8 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
 
     let response_bytes: &[u8] = &response.as_bytes();
     let mut buf_writer = BufWriter::new(tcp_stream);
-    buf_writer.write(response_bytes).unwrap();
+    let content_length = buf_writer.write(response_bytes).unwrap();
+    let mut message = format!("INFO: The response was sent. Content-Length: {:?}", content_length);
+    logger::log(&mut message, "logs/tests.log").unwrap();
     buf_writer.flush().unwrap();
 }
