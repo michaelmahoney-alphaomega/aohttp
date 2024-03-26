@@ -4,28 +4,34 @@
 
 extern crate serde_json; 
 
-use std::{net::TcpStream,io::{prelude::*, BufReader, BufWriter}};
-use serde_json::{Value, json};
+use std::{net::TcpStream,io::{prelude::*, BufWriter}};
+use serde_json::json;
 use crate::{http::*, logger}; // local module
 
 #[derive(Debug)]
-pub struct Error {
-    error_code: ErrorKind, }
+pub struct Error 
+{
+    error_code: ErrorKind, 
+}
 
 #[derive(Debug)]
-pub enum ErrorKind {
+pub enum ErrorKind 
+{
     // TODO
     // research what the standard is for propogating error in rust function calls. 
-    RouteNotFound,}
+    RouteNotFound,
+}
 
 #[derive(Debug)]
-pub struct Route {
+pub struct Route 
+{
     // TODO
     // 1. Additional validation
     // 2. some encryption?
     pub auth: HttpAuth,
     pub uri: Uri,
-    pub handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,}
+    pub handler: Option<fn(&Route) -> Result<HttpResponse, Error>>,
+}
     
 impl Route {
     fn find_route<'a>(uri: &Uri, routes: &Vec<&'a Route>) -> Result<&'a Route, Error> {
@@ -53,24 +59,12 @@ impl Route {
         http_response}}
 
 
-// fn collect_stream(tcp_stream_ref: &TcpStream) -> Value {
-//     let buf_reader =  BufReader::new(tcp_stream_ref);
-//     let request: Vec<String> = buf_reader
-//         .lines()
-//         .map(|result| result.unwrap())
-//         .take_while(|line: &String| !line.is_empty())
-//         .collect();
-
-//     let request: Value = json!(request); //convert Vec to serde_json::Value
-//     return request}
-
-
-
-
 // this is the main workhorse function of this crate\
 // it's currently skeletoned out for development
-pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
-    let root_route :Route = Route { // NEED TO PUT THIS DETAILS IN A CONFIG FILE
+pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) 
+{
+    let root_route :Route = Route 
+    { // NEED TO PUT THIS DETAILS IN A CONFIG FILE
         auth: HttpAuth::NoAuth,
         uri: Uri {
             path: String::from("/"),
@@ -104,6 +98,6 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>) {
     let mut buf_writer = BufWriter::new(tcp_stream);
     let content_length = buf_writer.write(response_bytes).unwrap();
     let mut message = format!("INFO: The response was sent. Content-Length: {:?}", content_length);
-    logger::log(&mut message, "logs/tests.log").unwrap();
+    logger::log(&mut message, "logs/router.log").unwrap();
     buf_writer.flush().unwrap();
 }

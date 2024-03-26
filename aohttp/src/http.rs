@@ -264,7 +264,10 @@ impl<'a> HttpRequest {
         // type the request
         let request_method = match method.as_str() {
             "GET"    => HttpMethod::Get,
-
+            "HEAD"   => HttpMethod::Head,
+            "OPTIONS"=> HttpMethod::Options,
+            "TRACE"  => HttpMethod::Trace,
+            "CONNECT"=> HttpMethod::Connect,
             "Delete" => HttpMethod::Delete,
             "PATCH"  => HttpMethod::Patch,
             "POST"   => HttpMethod::Post,
@@ -284,6 +287,7 @@ impl<'a> HttpRequest {
             "HTTP/1.0"   => HttpProtocol::Http10,
             "HTTP/1.1"   => HttpProtocol::Http11,
             "HTTP/2.0"   => HttpProtocol::Http2,
+            "HTTP/3.0"   => HttpProtocol::Http3,
             &_          => HttpProtocol::Http11,
         };
 
@@ -390,7 +394,7 @@ impl HttpResponse {
         
         let headers = match self.headers.as_str(){
             Some(headers) => headers,
-            None => "Content-Type: text/html"
+            None => "Content-Type: application/json"
         
         };
         let body = match self.body {
