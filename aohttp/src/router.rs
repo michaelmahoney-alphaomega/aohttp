@@ -36,20 +36,23 @@ pub struct Route
 impl Route {
     fn find_route<'a>(uri: &Uri, routes: &Vec<&'a Route>) -> Result<&'a Route, Error> {
         let mut answer: Result<&Route, Error> = Err(Error{error_code: ErrorKind::RouteNotFound});
-        if routes.is_empty() {
-            println!("There are no routes in the router.");
-            return answer}
         
-        else {
+        if routes.is_empty() 
+        {
+            println!("There are no routes in the router.");
+            return answer
+        }
+        
+        else 
+        {
             for route in routes {
                 if uri.path == route.uri.path {
                     println!("Found the route: {:?}", route.uri.path);
                     answer = Ok(route);
                     break}
-
                 else {continue;}}
-
-            return answer}}
+            return answer
+        }}
 
     fn execute_route(&self) -> Result<HttpResponse, Error> {
         let http_response = match self.handler {
@@ -85,10 +88,13 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
     
     let route = Route::find_route(&http_request.uri, routes)
-        .unwrap_or_else(|error| { 
-            let mut message = format!("ERROR: {:?}", error.error_code);
-            logger::log(&mut message, "logs/tests.log").unwrap(); 
-            return &root_route;});
+        .unwrap_or_else(
+            |error| 
+            { 
+                let mut message = format!("ERROR: {:?}", error.error_code);
+                logger::log(&mut message, "logs/router.log").unwrap(); 
+                return &root_route;}
+            );
 
     let response = match Route::execute_route(&route) {
         Ok(response) => response,

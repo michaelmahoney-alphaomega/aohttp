@@ -6,6 +6,14 @@ use chrono::{DateTime, Utc, SecondsFormat};
 
 pub fn log<'a>(message: &'a mut String, log_path: &str) -> Result<(), Error>
 {
+    //create the log file if it doesn't exist
+    {
+        let _ = fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(log_path);
+    }
+    
     // make a timestamp String - likely a better way but I'm sick of fighting with the typing system
     let time_stamp = SystemTime::now();
     let time_stamp: DateTime<Utc> = time_stamp.into();
