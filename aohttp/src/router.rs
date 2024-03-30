@@ -65,7 +65,6 @@ impl Route {
             Some(func) => {func(self)},
             None => Err(Error{error_code: ErrorKind::RouteHandlerNotFound})
         };
-
         http_response}}
 
 
@@ -83,7 +82,7 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
             fragment: None
         },
 
-        handler: Some(|route| -> Result<HttpResponse, Error> 
+        handler: Some(|_route| -> Result<HttpResponse, Error> 
         {
             let response: HttpResponse 
                 = HttpResponse 
@@ -102,7 +101,7 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
         Ok(http_request) => http_request,
         Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")
     };
-    
+
     let route = Route::find_route(&http_request.uri, routes)
         .unwrap_or_else(
             |error| 
@@ -112,7 +111,6 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
                 return &root_route;
             });
 
-       
     let response = Route::execute_route(&route).unwrap_or_else(
         |error| 
         {
@@ -124,13 +122,37 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
                 headers: json!({"Content-Type": "text/html"}),
                 body: None
             };
-        }
-    );
+        });
+    
+    if response.body.is_some()
+    {   
+        let content_length = response.body.as_ref().unwrap().len();
+        let mut message = format!("INFO response_code:{:?} response_length:{:?} request_uri:{:?} ", response.status_code, content_length, http_request.uri.path);
+        logger::log(&mut message, "logs/router.log").unwrap();
+    }
+
+    else
+    {
+        let mut message = format!("INFO response_code:{:?} response_length:0 request_uri:{:?} ", response.status_code, http_request.uri.path);
+        logger::log(&mut message, "logs/router.log").unwrap();
+    }
 
     let response_bytes: &[u8] = &response.as_bytes();
     let mut buf_writer = BufWriter::new(tcp_stream);
-    let content_length = buf_writer.write(response_bytes).unwrap();
-    let mut message = format!("INFO: The response was sent. Content-Length: {:?}", content_length);
-    logger::log(&mut message, "logs/router.log").unwrap();
-    buf_writer.flush().unwrap();
+    buf_writer.write(response_bytes).unwrap_or_else(
+        |e| 
+        {
+            let mut message = format!("ERROR: {:?}", e);
+            logger::log(&mut message, "logs/router.log").unwrap();
+            return 0
+        }
+    );
+    
+    buf_writer.flush().unwrap_or_else(
+        |e| 
+        {
+            let mut message = format!("ERROR: {:?}", e);
+            logger::log(&mut message, "logs/router.log").unwrap();
+        }
+    );
 }

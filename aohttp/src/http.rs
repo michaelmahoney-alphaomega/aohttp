@@ -143,7 +143,6 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
 
     // Check if the request matches the regex
     let caps = re.captures(&line).expect("There was no string after the regex filter - likely poison HTTP request"); 
-    let caps_len = caps.len();
 
     // Extract the request components from the capture groups 
     let processed_line = &caps[0];
@@ -291,7 +290,6 @@ impl<'a> HttpRequest {
         };
 
         pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> {
-            let custom_error = Error::new(std::io::ErrorKind::InvalidData, "Failed");
             let request_auth = match request_headers.get("Authorization"){
                 Some(auth) => auth.to_string(),
                 _ => String::from("")};
