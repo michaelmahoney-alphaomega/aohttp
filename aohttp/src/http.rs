@@ -136,7 +136,6 @@ pub struct Uri {
     pub fragment: Option<String>,}
 
 
-
 fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     let pattern = r"(?i)^(GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+([^\s?#]+)(?:\?([^\s#_]*))?(?:#([^\s_]*))?\s+HTTP/([0-9.]+)$";
     // Create a regex object from the pattern

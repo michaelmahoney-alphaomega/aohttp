@@ -4,7 +4,6 @@
 pub mod http;
 pub mod router;
 pub mod logger;
-mod routes;
 
 use std::net::TcpListener;
 use std::io::Error;

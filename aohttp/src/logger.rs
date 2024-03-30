@@ -31,5 +31,5 @@ pub fn log<'a>(message: &'a mut String, log_path: &str) -> Result<(), Error>
 
     match out_file {
         Ok(mut file) => writeln!(file, "{}",message),
-        Err(e) => panic!("ERROR: log function failed. Please see error: {e}")} 
+        Err(e) => panic!("ERROR: log function failed: {e}")} 
 }

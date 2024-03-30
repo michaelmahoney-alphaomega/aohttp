@@ -20,6 +20,8 @@ pub enum ErrorKind
     // TODO
     // research what the standard is for propogating error in rust function calls. 
     RouteNotFound,
+    RouteHandlerNotFound,
+
 }
 
 #[derive(Debug)]
@@ -45,19 +47,24 @@ impl Route {
         
         else 
         {
-            for route in routes {
+            for route in routes 
+            {
                 if uri.path == route.uri.path {
                     println!("Found the route: {:?}", route.uri.path);
                     answer = Ok(route);
                     break}
-                else {continue;}}
+
+                else {continue;}
+            }
             return answer
         }}
 
     fn execute_route(&self) -> Result<HttpResponse, Error> {
-        let http_response = match self.handler {
+        let http_response = match self.handler 
+        {
             Some(func) => {func(self)},
-            None => panic!("ERROR: The route has no handler. Killing the stream.")};
+            None => Err(Error{error_code: ErrorKind::RouteHandlerNotFound})
+        };
 
         http_response}}
 
@@ -69,23 +76,32 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
     let root_route :Route = Route 
     { // NEED TO PUT THIS DETAILS IN A CONFIG FILE
         auth: HttpAuth::NoAuth,
-        uri: Uri {
+        uri: Uri 
+        {
             path: String::from("/"),
             query: None,
-            fragment: None},
+            fragment: None
+        },
 
-        handler: Some(|route| -> Result<HttpResponse, Error> {
-            let response = HttpResponse {
-                status_code: HttpStatusCode::NotFound404,
-                headers: json!({"Content-Type": "text/html"}),
-                body: Some("hello world!".as_bytes().to_vec())};
+        handler: Some(|route| -> Result<HttpResponse, Error> 
+        {
+            let response: HttpResponse 
+                = HttpResponse 
+                {
+                    status_code: HttpStatusCode::NotFound404,
+                    headers: json!({"Content-Type": "text/html"}),
+                    body: Some("hello world!".as_bytes().to_vec())
+                };
 
-            return Ok(response)})
+            return Ok(response)
+        })
     };
 
-    let http_request = match HttpRequest::build_from_stream(&tcp_stream) {
+    let http_request = match HttpRequest::build_from_stream(&tcp_stream) 
+    {
         Ok(http_request) => http_request,
-        Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")};
+        Err(e) => panic!("ERROR: Failed to build the HttpRequest opject from the TcpStream. Please see the inner error: {e}")
+    };
     
     let route = Route::find_route(&http_request.uri, routes)
         .unwrap_or_else(
@@ -93,12 +109,23 @@ pub fn router(tcp_stream: TcpStream, routes: &Vec<&Route>)
             { 
                 let mut message = format!("ERROR: {:?}", error.error_code);
                 logger::log(&mut message, "logs/router.log").unwrap(); 
-                return &root_route;}
-            );
+                return &root_route;
+            });
 
-    let response = match Route::execute_route(&route) {
-        Ok(response) => response,
-        Err(error) => panic!("{:?}", error)};
+       
+    let response = Route::execute_route(&route).unwrap_or_else(
+        |error| 
+        {
+            let mut message = format!("ERROR: {:?}", error.error_code);
+            logger::log(&mut message, "logs/router.log").unwrap(); 
+            return HttpResponse 
+            {
+                status_code: HttpStatusCode::InternalServerError500,
+                headers: json!({"Content-Type": "text/html"}),
+                body: None
+            };
+        }
+    );
 
     let response_bytes: &[u8] = &response.as_bytes();
     let mut buf_writer = BufWriter::new(tcp_stream);
