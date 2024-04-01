@@ -8,3 +8,19 @@
 
 //     let request: Value = json!(request); //convert Vec to serde_json::Value
 //     return request}
+
+  // Sanitize URI by removing any characters that are not alphanumeric, dash, dot, slash, or tilde
+    // let re_sanitize = Regex::new(r"[^a-zA-Z0-9-./~]").unwrap();
+
+    // let method = String::from(method);
+
+    // let path = String::from(
+    //     re_sanitize.replace_all(path, "").as_ref());
+
+    // let query = String::from(
+    //     re_sanitize.replace_all(query, "").as_ref());
+
+    // let fragment = String::from(
+    //     re_sanitize.replace_all(fragment, "").as_ref());
+
+    // let version = String::from(version);

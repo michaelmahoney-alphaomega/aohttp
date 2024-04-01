@@ -6,8 +6,11 @@ extern crate serde_json;
 extern crate regex;
 
 use std::{net::TcpStream,io::{prelude::*, BufReader, Error},};
+use chrono::format;
 use serde_json::{Value, json};
 use regex::Regex;
+
+use crate::logger::log;
 
 
 //////////////////////////////////////// 
@@ -175,22 +178,6 @@ fn parse_request_line<'a>(line: &String) -> Result<Vec<String>, Error> {
     };
     println!("version: {version}");
 
-    // Sanitize URI by removing any characters that are not alphanumeric, dash, dot, slash, or tilde
-    // let re_sanitize = Regex::new(r"[^a-zA-Z0-9-./~]").unwrap();
-
-    // let method = String::from(method);
-
-    // let path = String::from(
-    //     re_sanitize.replace_all(path, "").as_ref());
-
-    // let query = String::from(
-    //     re_sanitize.replace_all(query, "").as_ref());
-
-    // let fragment = String::from(
-    //     re_sanitize.replace_all(fragment, "").as_ref());
-
-    // let version = String::from(version);
-
     let mut parsed_line = Vec::new();
         parsed_line.push(method); 
         parsed_line.push(path);
@@ -206,7 +193,13 @@ impl<'a> HttpRequest {
         let buf_reader =  BufReader::new(tcp_stream);
         let request: Vec<String> = buf_reader
             .lines()
-            .map(|result| result.unwrap())
+            .map(|result| result.unwrap_or_else(
+                |err| 
+                {
+                    let  message: &mut String = &mut format!("ERROR {:?}", err);
+                    log(message, "http_server.log").unwrap();
+                    String::from("")
+                }))
             .take_while(|line| !line.is_empty())
             .collect();
         
@@ -219,8 +212,7 @@ impl<'a> HttpRequest {
         for line in &request {
             let line = line.as_str();   
 
-            if !line.is_empty() {
-                request_headers.push(line)}
+            if !line.is_empty() {request_headers.push(line)}
             else {
                 let _line_break: usize = request.iter().position(|_line| true).unwrap();
                 break;}}
@@ -260,7 +252,8 @@ impl<'a> HttpRequest {
         
         
         // type the request
-        let request_method = match method.as_str() {
+        let request_method = match method.as_str() 
+        {
             "GET"    => HttpMethod::Get,
             "HEAD"   => HttpMethod::Head,
             "OPTIONS"=> HttpMethod::Options,
@@ -271,7 +264,8 @@ impl<'a> HttpRequest {
             "POST"   => HttpMethod::Post,
             "PUT"    => HttpMethod::Put,
             "UPDATE" => HttpMethod::Update,
-            &_       => HttpMethod::Get};
+            &_       => HttpMethod::Get
+        };
         
         // type the requested resource based on the root element
         let request_uri = Uri {
@@ -281,7 +275,8 @@ impl<'a> HttpRequest {
         };
 
         // type the protocol
-        let request_protocol = match version.as_str() {
+        let request_protocol = match version.as_str() 
+        {
             "HTTP/1.0"   => HttpProtocol::Http10,
             "HTTP/1.1"   => HttpProtocol::Http11,
             "HTTP/2.0"   => HttpProtocol::Http2,
@@ -289,29 +284,33 @@ impl<'a> HttpRequest {
             &_          => HttpProtocol::Http11,
         };
 
-        pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> {
-            let request_auth = match request_headers.get("Authorization"){
+        pub fn get_auth_type(request_headers: &Value) -> Result<HttpAuth,Error> 
+        {
+            let request_auth = match request_headers.get("Authorization")
+            {
                 Some(auth) => auth.to_string(),
-                _ => String::from("")};
+                _ => String::from("")
+            };
             
-            if request_auth.contains("Basic") {
-                return Ok(HttpAuth::Basic(request_auth))} //just do a lifetime for this
+            if request_auth.contains("Basic") {return Ok(HttpAuth::Basic(request_auth))} //just do a lifetime for this
     
-            else if request_auth.contains("Token") {
-                return Ok(HttpAuth::Modern(request_auth))}//just do a lifetime for this
+            else if request_auth.contains("Token") {return Ok(HttpAuth::Modern(request_auth))}//just do a lifetime for this
             
-            else {
-                return Ok(HttpAuth::NoAuth)}}
+            else {return Ok(HttpAuth::NoAuth)}
+        }
 
         let request_auth = get_auth_type(&request_headers).unwrap();      
     
-        let http_request = HttpRequest {
-            method: request_method,
-            uri: request_uri,
-            protocol: request_protocol,
-            auth: request_auth, //need to define function that returns the right type
-            headers: request_headers,
-            body: request_body,}; // need to define function that return the right type
+        let http_request: HttpRequest 
+            = HttpRequest 
+                {
+                    method: request_method,
+                    uri: request_uri,
+                    protocol: request_protocol,
+                    auth: request_auth, //need to define function that returns the right type
+                    headers: request_headers,
+                    body: request_body,
+                }; // need to define function that return the right type
 
         return Ok(http_request)
     }
